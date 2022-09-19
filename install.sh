@@ -2722,6 +2722,59 @@ install_xray_ws_only() {
     show_information
 }
 
+update_sh() {
+    ol_version=${shell_online_version}
+    echo "${ol_version}" >${shell_version_tmp}
+    [[ -z ${ol_version} ]] && echo -e "${Error} ${RedBG}  检测最新版本失败! ${Font}" && return 1
+    echo "${shell_version}" >>${shell_version_tmp}
+    newest_version=$(sort -rV ${shell_version_tmp} | head -1)
+    oldest_version=$(sort -V ${shell_version_tmp} | head -1)
+    version_difference=$(echo "(${newest_version:0:3}-${oldest_version:0:3})>0" | bc)
+    if [[ ${shell_version} != ${newest_version} ]]; then
+        if [[ ${auto_update} != "YES" ]]; then
+            if [[ ${version_difference} == 1 ]]; then
+                echo -e "\n${Warning} ${YellowBG} 存在新版本, 但版本跨度较大, 可能存在不兼容情况, 是否更新 [Y/${Red}N${Font}${YellowBG}]? ${Font}"
+            else
+                echo -e "\n${GreenBG} 存在新版本, 是否更新 [Y/${Red}N${Font}${GreenBG}]? ${Font}"
+            fi
+            read -r update_confirm
+        else
+            [[ -z ${ol_version} ]] && echo "检测 脚本 最新版本失败!" >>${log_file} && exit 1
+            [[ ${version_difference} == 1 ]] && echo "脚本 版本差别过大, 跳过更新!" >>${log_file} && exit 1
+            update_confirm="YES"
+        fi
+        case $update_confirm in
+        [yY][eE][sS] | [yY])
+            [[ -L ${idleleo_commend_file} ]] && rm -f ${idleleo_commend_file}
+            wget -N --no-check-certificate -P ${idleleo_dir} https://raw.githubusercontent.com/Govenry/AAA/main/install.sh && chmod +x ${idleleo_dir}/install.sh
+            ln -s ${idleleo_dir}/install.sh ${idleleo_commend_file}
+            clear
+            echo -e "${OK} ${GreenBG} 更新完成 ${Font}"
+            [[ ${version_difference} == 1 ]] && echo -e "${Warning} ${YellowBG} 脚本版本跨度较大, 若服务无法正常运行请卸载后重装! ${Font}"
+            ;;
+        *) ;;
+        esac
+    else
+        clear
+        echo -e "${OK} ${GreenBG} 当前版本为最新版本 ${Font}"
+    fi
+
+}
+
+check_file_integrity() {
+    if [[ ! -L ${idleleo_commend_file} ]] && [[ ! -f ${idleleo_dir}/install.sh ]]; then
+        check_system
+        pkg_install "bc,jq,wget"
+        [[ ! -d "${idleleo_dir}" ]] && mkdir -p ${idleleo_dir}
+        [[ ! -d "${idleleo_dir}/tmp" ]] && mkdir -p ${idleleo_dir}/tmp
+        wget -N --no-check-certificate -P ${idleleo_dir} https://raw.githubusercontent.com/Govenry/AAA/main/install.sh && chmod +x ${idleleo_dir}/install.sh
+        judge "下载最新脚本"
+        ln -s ${idleleo_dir}/install.sh ${idleleo_commend_file}
+        clear
+        bash idleleo
+    fi
+}
+
 read_version() {
     shell_online_version="$(check_version shell_online_version)"
     xray_version="$(check_version xray_tested_version)"
@@ -2899,6 +2952,7 @@ check_xray_local_connect() {
         xray_local_connect_status="${Red}未安装${Font}"
     fi
 }
+
 
 
 menu() {
