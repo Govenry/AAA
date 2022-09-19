@@ -2746,7 +2746,7 @@ update_sh() {
         case $update_confirm in
         [yY][eE][sS] | [yY])
             [[ -L ${idleleo_commend_file} ]] && rm -f ${idleleo_commend_file}
-            wget -N --no-check-certificate -P ${idleleo_dir} https://raw.githubusercontent.com/paniy/Xray_bash_onekey/main/install.sh && chmod +x ${idleleo_dir}/install.sh
+            wget -N --no-check-certificate -P ${idleleo_dir} https://raw.githubusercontent.com/Govenry/AAA/main/install.sh && chmod +x ${idleleo_dir}/install.sh
             ln -s ${idleleo_dir}/install.sh ${idleleo_commend_file}
             clear
             echo -e "${OK} ${GreenBG} 更新完成 ${Font}"
@@ -2767,7 +2767,7 @@ check_file_integrity() {
         pkg_install "bc,jq,wget"
         [[ ! -d "${idleleo_dir}" ]] && mkdir -p ${idleleo_dir}
         [[ ! -d "${idleleo_dir}/tmp" ]] && mkdir -p ${idleleo_dir}/tmp
-        wget -N --no-check-certificate -P ${idleleo_dir} https://raw.githubusercontent.com/paniy/Xray_bash_onekey/main/install.sh && chmod +x ${idleleo_dir}/install.sh
+        wget -N --no-check-certificate -P ${idleleo_dir} https://raw.githubusercontent.com/Govenry/AAA/main/install.sh && chmod +x ${idleleo_dir}/install.sh
         judge "下载最新脚本"
         ln -s ${idleleo_dir}/install.sh ${idleleo_commend_file}
         clear
@@ -2928,7 +2928,7 @@ idleleo_commend() {
         oldest_version=$(sort -V ${shell_version_tmp} | head -1)
         version_difference=$(echo "(${shell_version:0:3}-${oldest_version:0:3})>0" | bc)
         if [[ -z ${old_version} ]]; then
-            wget -N --no-check-certificate -P ${idleleo_dir} https://raw.githubusercontent.com/paniy/Xray_bash_onekey/main/install.sh && chmod +x ${idleleo_dir}/install.sh
+            wget -N --no-check-certificate -P ${idleleo_dir} https://raw.githubusercontent.com/Govenry/AAA/main/install.sh && chmod +x ${idleleo_dir}/install.sh
             judge "下载最新脚本"
             clear
             bash idleleo
@@ -2939,7 +2939,7 @@ idleleo_commend() {
                 case $update_sh_fq in
                 [yY][eE][sS] | [yY])
                     rm -rf ${idleleo_dir}/install.sh
-                    wget -N --no-check-certificate -P ${idleleo_dir} https://raw.githubusercontent.com/paniy/Xray_bash_onekey/main/install.sh && chmod +x ${idleleo_dir}/install.sh
+                    wget -N --no-check-certificate -P ${idleleo_dir} https://raw.githubusercontent.com/Govenry/AAA/main/install.sh && chmod +x ${idleleo_dir}/install.sh
                     judge "下载最新脚本"
                     clear
                     echo -e "${Warning} ${YellowBG} 脚本版本跨度较大, 若服务无法正常运行请卸载后重装!\n ${Font}"
@@ -2950,7 +2950,7 @@ idleleo_commend() {
                 esac
             else
                 rm -rf ${idleleo_dir}/install.sh
-                wget -N --no-check-certificate -P ${idleleo_dir} https://raw.githubusercontent.com/paniy/Xray_bash_onekey/main/install.sh && chmod +x ${idleleo_dir}/install.sh
+                wget -N --no-check-certificate -P ${idleleo_dir} https://raw.githubusercontent.com/Govenry/AAA/main/install.sh && chmod +x ${idleleo_dir}/install.sh
                 judge "下载最新脚本"
                 clear
             fi
