@@ -2918,6 +2918,87 @@ show_help() {
     exit 0
 }
 
+idleleo_commend() {
+    if [[ -L ${idleleo_commend_file} ]] || [[ -f ${idleleo_dir}/install.sh ]]; then
+        ##在线运行与本地脚本比对
+        [[ ! -L ${idleleo_commend_file} ]] && chmod +x ${idleleo_dir}/install.sh && ln -s ${idleleo_dir}/install.sh ${idleleo_commend_file}
+        old_version=$(grep "shell_version=" ${idleleo_dir}/install.sh | head -1 | awk -F '=|"' '{print $3}')
+        echo "${old_version}" >${shell_version_tmp}
+        echo "${shell_version}" >>${shell_version_tmp}
+        oldest_version=$(sort -V ${shell_version_tmp} | head -1)
+        version_difference=$(echo "(${shell_version:0:3}-${oldest_version:0:3})>0" | bc)
+        if [[ -z ${old_version} ]]; then
+            wget -N --no-check-certificate -P ${idleleo_dir} https://raw.githubusercontent.com/Govenry/AAA/main/install.sh && chmod +x ${idleleo_dir}/install.sh
+            judge "下载最新脚本"
+            clear
+            bash idleleo
+        elif [[ ${shell_version} != ${oldest_version} ]]; then
+            if [[ ${version_difference} == 1 ]]; then
+                echo -e "${Warning} ${YellowBG} 脚本版本跨度较大, 可能存在不兼容情况, 是否继续使用 [Y/${Red}N${Font}${YellowBG}]? ${Font}"
+                read -r update_sh_fq
+                case $update_sh_fq in
+                [yY][eE][sS] | [yY])
+                    rm -rf ${idleleo_dir}/install.sh
+                    wget -N --no-check-certificate -P ${idleleo_dir} https://raw.githubusercontent.com/Govenry/AAA/main/install.sh && chmod +x ${idleleo_dir}/install.sh
+                    judge "下载最新脚本"
+                    clear
+                    echo -e "${Warning} ${YellowBG} 脚本版本跨度较大, 若服务无法正常运行请卸载后重装!\n ${Font}"
+                    ;;
+                *)
+                    bash idleleo
+                    ;;
+                esac
+            else
+                rm -rf ${idleleo_dir}/install.sh
+                wget -N --no-check-certificate -P ${idleleo_dir} https://raw.githubusercontent.com/Govenry/AAA/main/install.sh && chmod +x ${idleleo_dir}/install.sh
+                judge "下载最新脚本"
+                clear
+            fi
+            bash idleleo
+        else
+            ol_version=${shell_online_version}
+            echo "${ol_version}" >${shell_version_tmp}
+            [[ -z ${ol_version} ]] && shell_need_update="${Red}[检测失败!]${Font}"
+            echo "${shell_version}" >>${shell_version_tmp}
+            newest_version=$(sort -rV ${shell_version_tmp} | head -1)
+            if [[ ${shell_version} != ${newest_version} ]]; then
+                shell_need_update="${Red}[有新版!]${Font}"
+                shell_emoji="${Red}>_<${Font}"
+            else
+                shell_need_update="${Green}[最新版]${Font}"
+                shell_emoji="${Green}^O^${Font}"
+            fi
+            if [[ -f ${xray_qr_config_file} ]]; then
+                if [[ $(info_extraction nginx_version) == null ]] || [[ ! -f "${nginx_dir}/sbin/nginx" ]]; then
+                    nginx_need_update="${Green}[未安装]${Font}"
+                elif [[ ${nginx_version} != $(info_extraction nginx_version) ]] || [[ ${openssl_version} != $(info_extraction openssl_version) ]] || [[ ${jemalloc_version} != $(info_extraction jemalloc_version) ]]; then
+                    nginx_need_update="${Green}[有新版]${Font}"
+                else
+                    nginx_need_update="${Green}[最新版]${Font}"
+                fi
+                if [[ -f ${xray_qr_config_file} ]] && [[ -f ${xray_conf} ]] && [[ -f /usr/local/bin/xray ]]; then
+                    xray_online_version=$(check_version xray_online_version)
+                    if [[ $(info_extraction xray_version) == null ]]; then
+                        xray_need_update="${Green}[已安装] (版本未知)${Font}"
+                    elif [[ ${xray_version} != $(info_extraction xray_version) ]] && [[ $(info_extraction xray_version) != ${xray_online_version} ]]; then
+                        xray_need_update="${Red}[有新版!]${Font}"
+                    elif [[ ${xray_version} == $(info_extraction xray_version) ]] || [[ $(info_extraction xray_version) == ${xray_online_version} ]]; then
+                        if [[ $(info_extraction xray_version) != ${xray_online_version} ]]; then
+                            xray_need_update="${Green}[有测试版]${Font}"
+                        else
+                            xray_need_update="${Green}[最新版]${Font}"
+                        fi
+                    fi
+                else
+                    xray_need_update="${Red}[未安装]${Font}"
+                fi
+            else
+                nginx_need_update="${Green}[未安装]${Font}"
+                xray_need_update="${Red}[未安装]${Font}"
+            fi
+        fi
+    fi
+}
 
 check_program() {
     if [[ -n $(pgrep nginx) ]]; then
@@ -2953,7 +3034,18 @@ check_xray_local_connect() {
     fi
 }
 
-
+check_online_version_connect() {
+    xray_online_version_status=$(curl_local_connect "www.idleleo.com" "/api/xray_shell_versions")
+    if [[ ${xray_online_version_status} != "200" ]]; then
+        if [[ ${xray_online_version_status} == "403" ]]; then
+            echo -e "${Error} ${RedBG} 脚本维护中.. 请稍后再试! ${Font}"
+        else
+            echo -e "${Error} ${RedBG} 无法检测所需依赖的在线版本, 请稍后再试! ${Font}"
+        fi
+        sleep 0.5
+        exit 0
+    fi
+}
 
 menu() {
 
@@ -3215,7 +3307,6 @@ menu() {
 }
 
 check_file_integrity
-check_online_version_connect
 read_version
 judge_mode
 idleleo_commend
